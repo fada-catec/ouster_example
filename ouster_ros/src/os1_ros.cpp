@@ -9,6 +9,14 @@
 #include "ouster/os1_util.h"
 #include "ouster_ros/os1_ros.h"
 
+#include <pcl/PCLPointCloud2.h>
+#include <pcl/conversions.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl_ros/transforms.h>
+
 namespace ouster_ros {
 namespace OS1 {
 
@@ -64,7 +72,7 @@ sensor_msgs::Imu packet_to_imu_msg(const PacketMsg& p,
 }
 
 sensor_msgs::PointCloud2 cloud_to_cloud_msg(const CloudOS1& cloud, ns timestamp,
-                                            const std::string& frame, bool ros_time_mode) {
+                                            const std::string& frame, bool ros_time_mode, int num_channels, uint32_t W) {
     sensor_msgs::PointCloud2 msg{};
     pcl::toROSMsg(cloud, msg);
     msg.header.frame_id = frame;
@@ -73,6 +81,32 @@ sensor_msgs::PointCloud2 cloud_to_cloud_msg(const CloudOS1& cloud, ns timestamp,
       msg.header.stamp = ros::Time::now(); 
     else
       msg.header.stamp.fromNSec(timestamp.count()); 
+
+    if(num_channels != 64)
+    {
+      pcl::PCLPointCloud2 pcl_pc2;
+      pcl_conversions::toPCL(msg, pcl_pc2);
+      pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_pc(new pcl::PointCloud<pcl::PointXYZ>);
+      pcl::fromPCLPointCloud2(pcl_pc2, *pcl_pc);
+      pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+      pcl::ExtractIndices<pcl::PointXYZ> extract;
+
+      for (int i = 0; i < pcl_pc->size(); i++) {
+          if (i % (64 / num_channels) != 0) {
+              inliers->indices.push_back(i);
+          }
+      }
+      extract.setInputCloud(pcl_pc);
+      extract.setIndices(inliers);
+      extract.setNegative(true);
+      extract.filter(*pcl_pc);
+
+      pcl_pc->width = W;
+      pcl_pc->height = num_channels;
+      pcl_pc->points.resize(pcl_pc->width * pcl_pc->height);
+
+      pcl::toROSMsg(*pcl_pc, msg);
+    }
 
     return msg;
 }

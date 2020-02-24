@@ -57,7 +57,7 @@ sensor_msgs::Imu packet_to_imu_msg(const PacketMsg& pm,
  * @return a ROS message containing the point cloud
  */
 sensor_msgs::PointCloud2 cloud_to_cloud_msg(const CloudOS1& cloud, ns timestamp,
-                                            const std::string& frame, bool ros_time_mode);
+                                            const std::string& frame, bool ros_time_mode, int num_channels, uint32_t W);
 
 /**
  * Convert transformation matrix return by sensor to ROS transform

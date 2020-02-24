@@ -10,6 +10,7 @@
   <arg name="viz" default="false" doc="whether to run a simple visualizer"/>
   <arg name="image" default="false" doc="publish range/intensity/noise image topic"/>
   <arg name="ros_time_mode" default="true" doc="the time of the msgs is the ros time"/>
+  <arg name="num_channels" default="64" doc="num of channels power of 2: 2, 4, 8, 16, 32, 64"/>
 
   <node pkg="ouster_ros" name="os1_node" type="os1_node" output="screen" required="true">
     <param name="~/lidar_mode" type="string" value="$(arg lidar_mode)"/>
@@ -23,6 +24,7 @@
 
   <node pkg="ouster_ros" type="os1_cloud_node" name="os1_cloud_node" output="screen" required="true">
     <param name="~/ros_time_mode" value="$(arg ros_time_mode)"/>
+    <param name="~/num_channels" value="$(arg num_channels)"/>
     <remap from="~/os1_config" to="/os1_node/os1_config"/>
     <remap from="~/lidar_packets" to="/os1_node/lidar_packets"/>
     <remap from="~/imu_packets" to="/os1_node/imu_packets"/>

@@ -28,6 +28,7 @@ int main(int argc, char** argv) {
     ros::NodeHandle nh("~");
 
     auto ros_time_mode = nh.param("ros_time_mode", false);
+    auto num_channels = nh.param("num_channels", 64);
     auto tf_prefix = nh.param("tf_prefix", std::string{});
     auto sensor_frame = tf_prefix + "/os1_sensor";
     auto imu_frame = tf_prefix + "/os1_imu";
@@ -59,7 +60,7 @@ int main(int argc, char** argv) {
         xyz_lut, W, H, {}, &PointOS1::make,
         [&](uint64_t scan_ts) mutable {
             msg = ouster_ros::OS1::cloud_to_cloud_msg(
-                cloud, std::chrono::nanoseconds{scan_ts}, lidar_frame, ros_time_mode);
+                cloud, std::chrono::nanoseconds{scan_ts}, lidar_frame, ros_time_mode, num_channels, W);
             lidar_pub.publish(msg);
         });
 
