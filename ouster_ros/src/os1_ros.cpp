@@ -25,12 +25,16 @@ bool read_lidar_packet(const client& cli, PacketMsg& m) {
 }
 
 sensor_msgs::Imu packet_to_imu_msg(const PacketMsg& p,
-                                   const std::string& frame) {
+                                   const std::string& frame, bool ros_time_mode) {
     const double standard_g = 9.80665;
     sensor_msgs::Imu m;
     const uint8_t* buf = p.buf.data();
 
-    m.header.stamp.fromNSec(imu_gyro_ts(buf));
+    if(ros_time_mode)
+      m.header.stamp = ros::Time::now();  
+    else
+      m.header.stamp.fromNSec(imu_gyro_ts(buf));  
+
     m.header.frame_id = frame;
 
     m.orientation.x = 0;
@@ -60,11 +64,16 @@ sensor_msgs::Imu packet_to_imu_msg(const PacketMsg& p,
 }
 
 sensor_msgs::PointCloud2 cloud_to_cloud_msg(const CloudOS1& cloud, ns timestamp,
-                                            const std::string& frame) {
+                                            const std::string& frame, bool ros_time_mode) {
     sensor_msgs::PointCloud2 msg{};
     pcl::toROSMsg(cloud, msg);
     msg.header.frame_id = frame;
-    msg.header.stamp.fromNSec(timestamp.count());
+
+    if(ros_time_mode)
+      msg.header.stamp = ros::Time::now(); 
+    else
+      msg.header.stamp.fromNSec(timestamp.count()); 
+
     return msg;
 }
 
